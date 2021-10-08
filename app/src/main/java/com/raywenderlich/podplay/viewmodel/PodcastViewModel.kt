@@ -9,7 +9,6 @@ import com.raywenderlich.podplay.model.Podcast
 import com.raywenderlich.podplay.repository.PodcastRepo
 import com.raywenderlich.podplay.util.DateUtils
 import com.raywenderlich.podplay.viewmodel.SearchViewModel.PodcastSummaryViewData
-import kotlinx.coroutines.launch
 import java.util.*
 
 class PodcastViewModel(application: Application) : AndroidViewModel(application) {
@@ -23,7 +22,17 @@ class PodcastViewModel(application: Application) : AndroidViewModel(application)
         .podcastDao()
     private var activePodcast: Podcast? = null
 
-
+    suspend fun setActivePodcast(feedUrl: String): PodcastSummaryViewData? {
+        val repo = podcastRepo ?: return null
+        val podcast = repo.getPodcast(feedUrl)
+        return if (podcast == null) {
+            null
+        } else {
+            _podcastLiveData.value = podcastToPodcastView(podcast)
+            activePodcast = podcast
+            return podcastToSummaryView(podcast)
+        }
+    }
 
     // 1
    suspend fun getPodcast(podcastSummaryViewData: PodcastSummaryViewData) {
@@ -103,7 +112,6 @@ fun saveActivePodcast() {
             repo.delete(it)
         }
     }
-
 
 data class PodcastViewData(
     var subscribed: Boolean = false,
